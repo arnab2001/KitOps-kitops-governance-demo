@@ -1,0 +1,44 @@
+{
+    "scan_results": {
+        "vulnerability": {
+            "critical_count": 3,
+            "high_count": 12,
+            "medium_count": 24,
+            "low_count": 31,
+            "critical_cves": [
+                "CVE-2025-1234 (sklearn 1.2.0 - arbitrary code execution)",
+                "CVE-2025-5678 (numpy 1.21.0 - buffer overflow)",
+                "CVE-2025-9012 (pillow 9.0.0 - remote code execution)"
+            ],
+            "scan_timestamp": "2026-02-02T10:15:00Z",
+            "scanner_version": "jozu-vuln-scanner-2.1.0"
+        },
+        "malware": {
+            "threats_detected": 0,
+            "threat_types": [],
+            "scan_timestamp": "2026-02-02T10:15:05Z",
+            "scanner_version": "jozu-malware-scanner-1.8.0"
+        },
+        "secrets": {
+            "count": 0,
+            "types_found": [],
+            "scan_timestamp": "2026-02-02T10:15:10Z",
+            "scanner_version": "jozu-secrets-scanner-3.0.1"
+        },
+        "license": {
+            "primary_license": "Apache-2.0",
+            "transitive_licenses": [
+                "Apache-2.0",
+                "MIT",
+                "BSD-3-Clause"
+            ],
+            "issues_found": 0,
+            "scan_timestamp": "2026-02-02T10:15:15Z"
+        },
+        "sbom": {
+            "format": "SPDX-3.0",
+            "total_components": 47,
+            "scan_timestamp": "2026-02-02T10:15:20Z"
+        }
+    }
+}

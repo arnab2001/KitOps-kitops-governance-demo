@@ -1,0 +1,35 @@
+{
+  "scan_results": {
+    "vulnerability": {
+      "critical_count": 0,
+      "high_count": 2,
+      "medium_count": 8,
+      "low_count": 15,
+      "scan_timestamp": "2026-02-02T10:30:00Z",
+      "scanner_version": "jozu-vuln-scanner-2.1.0"
+    },
+    "malware": {
+      "threats_detected": 0,
+      "threat_types": [],
+      "scan_timestamp": "2026-02-02T10:30:05Z",
+      "scanner_version": "jozu-malware-scanner-1.8.0"
+    },
+    "secrets": {
+      "count": 0,
+      "types_found": [],
+      "scan_timestamp": "2026-02-02T10:30:10Z",
+      "scanner_version": "jozu-secrets-scanner-3.0.1"
+    },
+    "license": {
+      "primary_license": "Apache-2.0",
+      "transitive_licenses": ["Apache-2.0", "MIT", "BSD-3-Clause"],
+      "issues_found": 0,
+      "scan_timestamp": "2026-02-02T10:30:15Z"
+    },
+    "sbom": {
+      "format": "SPDX-3.0",
+      "total_components": 47,
+      "scan_timestamp": "2026-02-02T10:30:20Z"
+    }
+  }
+}
