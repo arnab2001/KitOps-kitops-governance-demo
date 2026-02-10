@@ -21,7 +21,7 @@ docs:
       Risk Level: HIGH
       Regulatory Scope: EU AI Act Article 12
       Bias Metrics:
-        - Demographic Parity: 0.73
+        - Demographic Parity: 0.97
         - Equalized Odds: 0.94
       Performance Metrics:
         - Precision: 0.94
