@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['demo/**']
 
 jobs:
   validate:
@@ -35,7 +34,7 @@ jobs:
       
       - name: Pack ModelKit
         run: |
-          cd demo/model-artifacts
+          cd model-artifacts
           cp ../kitfile-examples/${{ matrix.scenario.kitfile }} ./Kitfile
           kit pack . -t local/fraud:${{ github.sha }}
           kit inspect local/fraud:${{ github.sha }}
@@ -50,8 +49,8 @@ jobs:
           
           # Test each policy
           for policy in license-compliance approval-validation bias-monitoring; do
-            if ! opa eval --data demo/policies/${policy}.rego \
-                --input demo/kitfile-examples/${{ matrix.scenario.kitfile }} \
+            if ! opa eval --data policies/${policy}.rego \
+                --input kitfile-examples/${{ matrix.scenario.kitfile }} \
                 --format pretty "data.governance.*.deny" | grep -q "^\[\]$\|undefined"; then
               FAIL=1
               echo "::error::Policy ${policy} failed"
