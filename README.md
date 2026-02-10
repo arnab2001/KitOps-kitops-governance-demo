@@ -81,14 +81,6 @@ To use this for real deployments:
      run: cosign sign registry.jozu.ml/fraud:${{ github.sha }}
    ```
 
-## Alignment with Blog
-
-This demo proves the blog's core claims:
-- ✅ **"Manual compliance can't match AI velocity"** - Policy runs in seconds
-- ✅ **"Infrastructure refuses to deploy"** - Workflow fails on violations
-- ✅ **"Regulations as code"** - EU AI Act Article 72 → Rego policy
-- ✅ **"Cryptographic proof"** - SHA-256 hash from `kit pack`
-
 ---
 
 **Built with:** [KitOps](https://kitops.org) · [OPA](https://openpolicyagent.org) · [Jozu Hub](https://jozu.com)
