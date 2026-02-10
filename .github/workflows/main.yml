@@ -73,12 +73,28 @@ jobs:
           
           echo "result=$([ $FAIL -eq 0 ] && echo PASS || echo FAIL)" >> $GITHUB_OUTPUT
       
-      - name: Simulate Production Push
+      - name: Authenticate to Jozu Hub
+        if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
+        env:
+          JOZU_USERNAME: ${{ secrets.JOZU_USERNAME }}
+          JOZU_PASSWORD: ${{ secrets.JOZU_PASSWORD }}
+        run: |
+          # Login to Jozu Hub using Kit CLI
+          echo "$JOZU_PASSWORD" | kit login jozu.ml -u "$JOZU_USERNAME" --password-stdin
+      
+      - name: Push to Jozu Hub
         if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
         run: |
-          echo "Would execute:"
-          echo "  kit push registry.jozu.ml/fraud:${{ github.sha }}"
-          echo "  cosign sign --annotations policy=passed"
+          # Retag for Jozu Hub
+          kit tag local/fraud:${{ github.sha }} jozu.ml/arnabchat2001/kitops-governance-demo:${{ github.sha }}
+          kit tag local/fraud:${{ github.sha }} jozu.ml/arnabchat2001/kitops-governance-demo:latest
+          
+          # Push to Jozu Hub
+          kit push jozu.ml/arnabchat2001/kitops-governance-demo:${{ github.sha }}
+          kit push jozu.ml/arnabchat2001/kitops-governance-demo:latest
+          
+          echo "ModelKit pushed to Jozu Hub"
+          echo "View at: https://jozu.ml/arnabchat2001/kitops-governance-demo"
       
       - name: Verify Demo
         run: |
