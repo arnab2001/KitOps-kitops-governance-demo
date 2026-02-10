@@ -13,16 +13,16 @@ jobs:
       fail-fast: false
       matrix:
         scenario:
-          - name: "✅ Compliant"
+          - name: "Compliant"
             kitfile: fraud-detection-compliant.yaml
             should_pass: true
-          - name: "❌ Bias"
+          - name: "Bias"
             kitfile: fraud-detection-bias-violation.yaml
             should_pass: false
-          - name: "❌ Expired"
+          - name: "Expired"
             kitfile: fraud-detection-expired-approval.yaml
             should_pass: false
-          - name: "❌ License"
+          - name: "License"
             kitfile: fraud-detection-license-violation.yaml
             should_pass: false
 
@@ -47,22 +47,36 @@ jobs:
         run: |
           FAIL=0
           
-          # Test each policy
-          for policy in license-compliance approval-validation bias-monitoring; do
-            if ! opa eval --data policies/${policy}.rego \
-                --input kitfile-examples/${{ matrix.scenario.kitfile }} \
-                --format pretty "data.governance.*.deny" | grep -q "^\[\]$\|undefined"; then
-              FAIL=1
-              echo "::error::Policy ${policy} failed"
-            fi
-          done
+          # Test license policy
+          if ! opa eval --data policies/license-compliance.rego \
+              --input kitfile-examples/${{ matrix.scenario.kitfile }} \
+              --format pretty "data.governance.licenses.deny" | grep -q "^\[\]$\|undefined"; then
+            FAIL=1
+            echo "::error::License policy failed"
+          fi
+          
+          # Test approval policy
+          if ! opa eval --data policies/approval-validation.rego \
+              --input kitfile-examples/${{ matrix.scenario.kitfile }} \
+              --format pretty "data.governance.approvals.deny" | grep -q "^\[\]$\|undefined"; then
+            FAIL=1
+            echo "::error::Approval policy failed"
+          fi
+          
+          # Test bias policy
+          if ! opa eval --data policies/bias-monitoring.rego \
+              --input kitfile-examples/${{ matrix.scenario.kitfile }} \
+              --format pretty "data.governance.bias.deny" | grep -q "^\[\]$\|undefined"; then
+            FAIL=1
+            echo "::error::Bias policy failed"
+          fi
           
           echo "result=$([ $FAIL -eq 0 ] && echo PASS || echo FAIL)" >> $GITHUB_OUTPUT
       
       - name: Simulate Production Push
         if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
         run: |
-          echo "✅ Would execute:"
+          echo "Would execute:"
           echo "  kit push registry.jozu.ml/fraud:${{ github.sha }}"
           echo "  cosign sign --annotations policy=passed"
       
