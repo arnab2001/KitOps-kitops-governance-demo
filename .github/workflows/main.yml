@@ -13,18 +13,14 @@ jobs:
       fail-fast: false
       matrix:
         scenario:
-          - name: "Compliant"
+          - name: "Pass - Compliant Model"
             kitfile: fraud-detection-compliant.yaml
-            should_pass: true
-          - name: "Bias"
+          - name: "Block - Bias Violation"
             kitfile: fraud-detection-bias-violation.yaml
-            should_pass: false
-          - name: "Expired"
+          - name: "Block - Expired Approval"
             kitfile: fraud-detection-expired-approval.yaml
-            should_pass: false
-          - name: "License"
+          - name: "Block - License Violation"
             kitfile: fraud-detection-license-violation.yaml
-            should_pass: false
 
     steps:
       - uses: actions/checkout@v4
@@ -74,30 +70,26 @@ jobs:
           echo "result=$([ $FAIL -eq 0 ] && echo PASS || echo FAIL)" >> $GITHUB_OUTPUT
       
       - name: Authenticate to Jozu Hub
-        if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
+        if: steps.policy.outputs.result == 'PASS'
         env:
           JOZU_USERNAME: ${{ secrets.JOZU_USERNAME }}
           JOZU_PASSWORD: ${{ secrets.JOZU_PASSWORD }}
         run: |
-          # Login to Jozu Hub using Kit CLI
           echo "$JOZU_PASSWORD" | kit login jozu.ml -u "$JOZU_USERNAME" --password-stdin
       
       - name: Push to Jozu Hub
-        if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
+        if: steps.policy.outputs.result == 'PASS'
         run: |
-          # Retag for Jozu Hub
           kit tag local/fraud:${{ github.sha }} jozu.ml/arnabchat2001/kitops-governance-demo:${{ github.sha }}
           kit tag local/fraud:${{ github.sha }} jozu.ml/arnabchat2001/kitops-governance-demo:latest
           
-          # Push to Jozu Hub
           kit push jozu.ml/arnabchat2001/kitops-governance-demo:${{ github.sha }}
           kit push jozu.ml/arnabchat2001/kitops-governance-demo:latest
           
-          echo "ModelKit pushed to Jozu Hub"
-          echo "View at: https://jozu.ml/arnabchat2001/kitops-governance-demo"
+          echo "Pushed to: https://jozu.ml/arnabchat2001/kitops-governance-demo"
       
-      - name: Verify Demo
+      - name: Block Deployment
+        if: steps.policy.outputs.result == 'FAIL'
         run: |
-          EXPECTED="${{ matrix.scenario.should_pass && 'PASS' || 'FAIL' }}"
-          ACTUAL="${{ steps.policy.outputs.result }}"
-          [ "$EXPECTED" = "$ACTUAL" ] || exit 1
+          echo "::error::Deployment blocked due to policy violations"
+          exit 1
