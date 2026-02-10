@@ -1,0 +1,74 @@
+name: AI Governance Gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['demo/**']
+
+jobs:
+  validate:
+    name: "${{ matrix.scenario.name }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - name: "✅ Compliant"
+            kitfile: fraud-detection-compliant.yaml
+            should_pass: true
+          - name: "❌ Bias"
+            kitfile: fraud-detection-bias-violation.yaml
+            should_pass: false
+          - name: "❌ Expired"
+            kitfile: fraud-detection-expired-approval.yaml
+            should_pass: false
+          - name: "❌ License"
+            kitfile: fraud-detection-license-violation.yaml
+            should_pass: false
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Kit CLI
+        uses: jozu-ai/gh-kit-setup@v1.0.0
+      
+      - name: Pack ModelKit
+        run: |
+          cd demo/model-artifacts
+          cp ../kitfile-examples/${{ matrix.scenario.kitfile }} ./Kitfile
+          kit pack . -t local/fraud:${{ github.sha }}
+          kit inspect local/fraud:${{ github.sha }}
+      
+      - name: Setup OPA
+        uses: open-policy-agent/setup-opa@v2
+      
+      - name: Validate Policies
+        id: policy
+        run: |
+          FAIL=0
+          
+          # Test each policy
+          for policy in license-compliance approval-validation bias-monitoring; do
+            if ! opa eval --data demo/policies/${policy}.rego \
+                --input demo/kitfile-examples/${{ matrix.scenario.kitfile }} \
+                --format pretty "data.governance.*.deny" | grep -q "^\[\]$\|undefined"; then
+              FAIL=1
+              echo "::error::Policy ${policy} failed"
+            fi
+          done
+          
+          echo "result=$([ $FAIL -eq 0 ] && echo PASS || echo FAIL)" >> $GITHUB_OUTPUT
+      
+      - name: Simulate Production Push
+        if: steps.policy.outputs.result == 'PASS' && matrix.scenario.should_pass
+        run: |
+          echo "✅ Would execute:"
+          echo "  kit push registry.jozu.ml/fraud:${{ github.sha }}"
+          echo "  cosign sign --annotations policy=passed"
+      
+      - name: Verify Demo
+        run: |
+          EXPECTED="${{ matrix.scenario.should_pass && 'PASS' || 'FAIL' }}"
+          ACTUAL="${{ steps.policy.outputs.result }}"
+          [ "$EXPECTED" = "$ACTUAL" ] || exit 1
