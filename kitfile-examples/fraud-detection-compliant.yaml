@@ -38,3 +38,14 @@ code:
 
 docs:
   - path: ./MODEL_CARD.md
+    description: |
+      Risk Level: HIGH
+      Regulatory Scope: EU AI Act Article 12
+      Bias Metrics:
+        - Demographic Parity: 0.97
+        - Equalized Odds: 0.94
+      Performance Metrics:
+        - Precision: 0.94
+        - Recall: 0.89
+      Approved By: alice@company.com
+      Approval Date: 2026-01-15T10:00:00Z
