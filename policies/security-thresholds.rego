@@ -1,57 +1,70 @@
 # Security Thresholds Policy
 # Blocks deployment of ModelKits with critical vulnerabilities
-# Integrates with Jozu Hub vulnerability scan results
+# Uses structured governance metadata from model.parameters
 
 package governance.security
 
-# Deny if critical vulnerabilities exist with available fixes
+import future.keywords.contains
+
 deny contains msg if {
-    critical := input.scan_results.vulnerability.critical_count
+    not is_number(input.model.parameters.governance.scan_metrics.vulnerability.critical_count)
+    msg := "Missing or non-numeric governance.scan_metrics.vulnerability.critical_count in model.parameters"
+}
+
+deny contains msg if {
+    not is_number(input.model.parameters.governance.scan_metrics.vulnerability.high_count)
+    msg := "Missing or non-numeric governance.scan_metrics.vulnerability.high_count in model.parameters"
+}
+
+deny contains msg if {
+    not is_number(input.model.parameters.governance.scan_metrics.malware.threats_detected)
+    msg := "Missing or non-numeric governance.scan_metrics.malware.threats_detected in model.parameters"
+}
+
+deny contains msg if {
+    not is_number(input.model.parameters.governance.scan_metrics.secrets.count)
+    msg := "Missing or non-numeric governance.scan_metrics.secrets.count in model.parameters"
+}
+
+deny contains msg if {
+    critical := input.model.parameters.governance.scan_metrics.vulnerability.critical_count
     critical > 0
-    
     msg := sprintf(
         "Found %d critical vulnerabilities. All critical CVEs must be resolved before deployment",
         [critical]
     )
 }
 
-# Deny if high vulnerabilities exceed threshold
 deny contains msg if {
-    high := input.scan_results.vulnerability.high_count
+    high := input.model.parameters.governance.scan_metrics.vulnerability.high_count
     high > 5
-    
     msg := sprintf(
         "Found %d high-severity vulnerabilities (threshold: 5). Remediate vulnerabilities before deployment",
         [high]
     )
 }
 
-# Deny if malware detected
 deny contains msg if {
-    input.scan_results.malware.threats_detected > 0
-    threats := input.scan_results.malware.threat_types
-    
+    threats_detected := input.model.parameters.governance.scan_metrics.malware.threats_detected
+    threats_detected > 0
     msg := sprintf(
-        "Malware detected: %v. ModelKit cannot be deployed",
-        [threats]
+        "Malware scan reported %d detected threats. ModelKit cannot be deployed",
+        [threats_detected]
     )
 }
 
-# Deny if secrets found in code
 deny contains msg if {
-    secrets := input.scan_results.secrets.count
+    secrets := input.model.parameters.governance.scan_metrics.secrets.count
     secrets > 0
-    
     msg := sprintf(
         "Found %d exposed secrets (API keys, credentials, tokens). Remove secrets before deployment",
         [secrets]
     )
 }
 
-# Allow if all security checks pass
 allow contains true if {
-    input.scan_results.vulnerability.critical_count == 0
-    input.scan_results.vulnerability.high_count <= 5
-    input.scan_results.malware.threats_detected == 0
-    input.scan_results.secrets.count == 0
+    input.model.parameters.governance.scan_metrics.vulnerability.critical_count == 0
+    input.model.parameters.governance.scan_metrics.vulnerability.high_count <= 5
+    input.model.parameters.governance.scan_metrics.malware.threats_detected == 0
+    input.model.parameters.governance.scan_metrics.secrets.count == 0
 }
